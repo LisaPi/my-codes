@@ -14,7 +14,7 @@ for info in line:
 child=login1.ssh_login(a[0],a[1],a[2])
 
 
-f=open("1.txt")
+f=open("2.txt")
 lines = f.readlines()  
 f.close()
 
@@ -22,11 +22,8 @@ f.close()
 for data in lines:
 
     print 'data:', data
-    b=data.split(',')
+    b=data.split()
     command=[b[0],b[1]]
-    #print command
-    #print b[0]
-    #print b[5]
     #Send Linux commands
     for cmd in command:
         login1.sendExpect(child,cmd,b[2])

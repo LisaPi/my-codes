@@ -1,1 +1,3 @@
-version pwd [$#>] Hardware Model P-3290 20914 
+version,pwd,[$#>],Hardware,Mode,P-3290,20979
+hostname,pwd,[$#>],Hardware,Model,XorPlus,0
+ls -lt,pwd,[$#>],Hardware,Model,total,0
