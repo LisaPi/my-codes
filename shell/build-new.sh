@@ -4,7 +4,7 @@
 help_usage ()
 {
     echo "Usage: ./build.sh model branch  model type license dversion"
-    echo "Example: ./build.sh 3290 1.1 3290  1 1"
+    echo "Example: ./build.sh 3290 1.1 3290  1"
     echo "model : the platform model"
     echo "branch : the code branches"
     echo "type : svn type"
