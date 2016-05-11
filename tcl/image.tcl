@@ -86,6 +86,33 @@ proc sCheck {sVer} {
 	return
 }
 
+# get console server
+proc sGetConsole {sConsole} {
+
+	upvar $sConsole sConsoles
+
+	set timeout 15
+	send_user "select console server 10.10.50.123 (input 0); select console server 10.10.50.122 (input 1):"
+    expect_user {
+    	-re "0\n" {set flag 0}
+    	-re "1\n" {set flag 1}
+    	timeout {set flag 0}
+        -re "\n" {set flag 0}
+	}
+
+	if {$flag == 0} {
+
+		set sConsoles 123
+		
+	} else {
+
+        set sConsoles 122
+    }
+
+	return
+}
+
+
 # Functon to do the send expect action
 proc sExpect {exps cmds} {
     foreach exp $exps cmd $cmds {
@@ -104,7 +131,7 @@ proc sExpect {exps cmds} {
 proc rPdu {iPdu iPort} {
 
 	# reload
-    if {$iPdu == "91" || $iPdu == "92" || $iPdu == "93"} {
+    if {$iPdu == "91" || $iPdu == "92" || $iPdu == "93" || $iPdu == "94" || $iPdu == "95" || $iPdu == "96"} {
 
         kickPduOut $iPdu
     	spawn telnet 10.10.50.$iPdu
@@ -185,8 +212,9 @@ proc sImage {sIp sPro sIm sRel {sVer 0}} {
 
     switch $sPro {
         "6700" {set sPro as6701_32x}
-        "4654" {set sPro es4654bf}
         "3924" {set sPro as5600_52x}
+        "4654" {set sPro as4600_54t}
+        "3296" {set sPro 3297}
     }
 
     upvar $sIm sIms
@@ -226,71 +254,11 @@ proc sImage {sIp sPro sIm sRel {sVer 0}} {
 }
 
 # Create port db
-proc dbPort {sPort iPort sPro iPdu} {
+proc dbPort {sConsole sPort iPort sPro iPdu} {
 
 	upvar $iPort iPorts
-    upvar $sPro sPros
+       upvar $sPro sPros
 	upvar $iPdu iPdus
-
-
-    kickPduOut 93
-    spawn telnet 10.10.50.93
-
-    while 1 {
-        expect {
-            "User Name" {
-                send "apc\r"
-            }
-            "Password" {
-                send "apc\r"
-            }
-            ">" {
-                send "1\r"
-                break
-            }
-        }
-    }
-
-    while 1 {
-        expect {
-            ">" {
-                send "2\r\r"
-                break
-            }
-        }
-    }
-
-    while 1 {
-        expect {
-            ">" {
-                send "1\r\r"
-                expect -re "(.*)Master Control"
-                set sDbPort $expect_out(buffer)
-                send "\r"
-                break
-            }
-        }
-    }
-
-    while 1 {
-        expect {
-            "<ESC>- Back" {send \033; exp_continue}
-            "Press <ENTER> to continue..." {send "\r"; exp_continue}
-            "<ESC>- Main Menu" {send "4\r";break}
-        }
-    }
-
-    puts "\n########################"
-    puts "sDbPort:$sDbPort\n"
-    puts "########################\n"
-
-    catch close
-
-    regexp "(\[0-9a-z]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_" $sDbPort sTmp iPorts sPros
-    if {[info exists iPorts] == 1} {
-        set iPdus 93
-        return
-    }
 
     kickPduOut 90
     spawn telnet 10.10.50.90
@@ -337,15 +305,14 @@ proc dbPort {sPort iPort sPro iPdu} {
 	puts "sDbPort:$sDbPort\n"
     puts "########################\n"
 
-	catch close
-
-	regexp "(\[0-9]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_" $sDbPort sTmp iPorts sPros
+	catch close  
+	regexp "(\[0-9]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_i\[0-9]+_\[0-9]-\[0-9]+_c[set sConsole]\[ ]" $sDbPort sTmp iPorts sPros
 
 	if {[info exists iPorts] == 1} {
 		set iPdus 90 
 		return 
 	}
-
+   
     kickPduOut 91
     spawn telnet 10.10.50.91
 
@@ -399,7 +366,7 @@ proc dbPort {sPort iPort sPro iPdu} {
 
     catch close
 
-    regexp "(\[0-9a-z]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_" $sDbPort sTmp iPorts sPros
+    regexp "(\[0-9a-z]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_i\[0-9]+_\[0-9]-\[0-9]+_c[set sConsole]\[ ]" $sDbPort sTmp iPorts sPros
     if {[info exists iPorts] == 1} {
         set iPdus 91
         return
@@ -458,7 +425,7 @@ proc dbPort {sPort iPort sPro iPdu} {
 
     catch close
 
-    regexp "(\[0-9a-z]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_" $sDbPort sTmp iPorts sPros
+    regexp "(\[0-9a-z]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_i\[0-9]+_\[0-9]-\[0-9]+_c[set sConsole]\[ ]" $sDbPort sTmp iPorts sPros
     if {[info exists iPorts] == 1} {
         set iPdus 92
         return
@@ -517,13 +484,192 @@ proc dbPort {sPort iPort sPro iPdu} {
 
     catch close
 
-    regexp "(\[0-9a-z]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_" $sDbPort sTmp iPorts sPros
+    regexp "(\[0-9a-z]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_i\[0-9]+_\[0-9]-\[0-9]+_c[set sConsole]\[ ]" $sDbPort sTmp iPorts sPros
     if {[info exists iPorts] == 1} {
         set iPdus 93
         return
     }
 
-	return
+    kickPduOut 94
+    spawn telnet 10.10.50.94
+
+    while 1 {
+        expect {
+            "User Name" {
+                send "apc\r"
+            }
+            "Password" {
+                send "apc\r"
+            }
+            ">" {
+                send "1\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            ">" {
+                send "2\r\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            ">" {
+                send "1\r\r"
+                expect -re "(.*)Master Control"
+                set sDbPort $expect_out(buffer)
+                send "\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            "<ESC>- Back" {send \033; exp_continue}
+            "Press <ENTER> to continue..." {send "\r"; exp_continue}
+            "<ESC>- Main Menu" {send "4\r";break}
+        }
+    }
+
+    puts "\n########################"
+    puts "sDbPort:$sDbPort\n"
+    puts "########################\n"
+
+    catch close
+
+    regexp "(\[0-9a-z]+)-\[ ]+(\[0-9a-z]+)_[set sPort]_i\[0-9]+_\[0-9]-\[0-9]+_c[set sConsole]\[ ]" $sDbPort sTmp iPorts sPros
+    if {[info exists iPorts] == 1} {
+        set iPdus 94
+        return
+    }
+
+    kickPduOut 95
+    spawn telnet 10.10.50.95
+
+    while 1 {
+        expect {
+            "User Name" {
+                send "apc\r"
+            }
+            "Password" {
+                send "apc\r"
+            }
+            ">" {
+                send "1\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            ">" {
+                send "2\r\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            ">" {
+                send "1\r\r"
+                expect -re "(.*)Master Control"
+                set sDbPort $expect_out(buffer)
+                send "\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            "<ESC>- Back" {send \033; exp_continue}
+            "Press <ENTER> to continue..." {send "\r"; exp_continue}
+            "<ESC>- Main Menu" {send "4\r";break}
+        }
+    }
+
+    puts "\n########################"
+    puts "sDbPort:$sDbPort\n"
+    puts "########################\n"
+
+    catch close
+
+    regexp "(\[0-9a-z]+)-\[ ]+(\[0-9a-z]+)_[set sPort]_i\[0-9]+_\[0-9]-\[0-9]+_c[set sConsole]\[ ]" $sDbPort sTmp iPorts sPros
+    if {[info exists iPorts] == 1} {
+        set iPdus 95
+        return
+    }
+
+    return
+
+    kickPduOut 96
+    spawn telnet 10.10.50.96
+
+    while 1 {
+        expect {
+            "User Name" {
+                send "apc\r"
+            }
+            "Password" {
+                send "apc\r"
+            }
+            ">" {
+                send "1\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            ">" {
+                send "2\r\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            ">" {
+                send "1\r\r"
+                expect -re "(.*)Master Control"
+                set sDbPort $expect_out(buffer)
+                send "\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            "<ESC>- Back" {send \033; exp_continue}
+            "Press <ENTER> to continue..." {send "\r"; exp_continue}
+            "<ESC>- Main Menu" {send "4\r";break}
+        }
+    }
+
+    puts "\n########################"
+    puts "sDbPort:$sDbPort\n"
+    puts "########################\n"
+
+    catch close
+
+    regexp "(\[0-9a-z]+)-\[ ]+(\[0-9a-z]+)_[set sPort]_i\[0-9]+_\[0-9]-\[0-9]+_c[set sConsole]\[ ]" $sDbPort sTmp iPorts sPros
+    if {[info exists iPorts] == 1} {
+        set iPdus 96
+        return
+    }
+
+    return
 }
 
 # Kill pdu
@@ -610,7 +756,7 @@ proc tftpCopy {sIp sName sDir} {
 # Kill user
 proc userKick {sPort} {
 
-    spawn telnet 10.10.50.123
+    spawn telnet 10.10.50.122
 
     while 1 {
         expect {
@@ -705,7 +851,7 @@ proc userKickNew {sPort} {
 }
 
 # Function to update image
-proc sUpdate {sPort sDir sIp sPro iPort iPdu sCon sApp} {
+proc sUpdate {sPort sDir sIp sPro iPort iPdu sCon sApp sConsole} {
 
 	# uboot cmd set
     set fCmd ""
@@ -724,6 +870,8 @@ proc sUpdate {sPort sDir sIp sPro iPort iPdu sCon sApp} {
         set fCmd {setenv bootargs root=/dev/ram rw console=ttyS0,115200;usb start;ext2load usb 0:2 $loadaddr boot/uImage;ext2load usb 0:2 $fdtaddr boot/p2020rdb.dtb;ext2load usb 0:2 $ramdiskaddr boot/rootfs.ext2.gz.uboot;bootm $loadaddr $ramdiskaddr $fdtaddr}
     } elseif {$sPro == "3296"} {
         set fCmd {usb start;setenv bootargs root=/dev/ram rw console=ttyS0,115200;ext2load usb 0:2 $loadaddr boot/uImage;ext2load usb 0:2 $ramdiskaddr boot/$ramdiskfile;ext2load usb 0:2 $fdtaddr boot/$fdtfile;bootm $loadaddr $ramdiskaddr $fdtaddr}
+    } elseif {$sPro == "3297"} {
+        set fCmd {usb start;setenv bootargs root=/dev/ram rw console=ttyS0,115200;ext2load usb 0:2 $loadaddr boot/uImage;ext2load usb 0:2 $ramdiskaddr boot/$ramdiskfile;ext2load usb 0:2 $fdtaddr boot/$fdtfile;bootm $loadaddr $ramdiskaddr $fdtaddr}
     } elseif {$sPro == "3924" || $sPro == "5401"} {
         set fCmd ""
     } elseif {$sPro == "5101"} {
@@ -738,11 +886,11 @@ proc sUpdate {sPort sDir sIp sPro iPort iPdu sCon sApp} {
     set 3922 {usb start;setenv bootargs root=/dev/sda1 rw noinitrd console=$consoledev,$baudrate rootdelay=10 $othbootargs;ext2load usb 0:1 $loadaddr boot/uImage ;ext2load usb 0:1 $fdtaddr boot/p2020rdb.dtb;bootm $loadaddr - $fdtaddr}
     set 3930 {usb start;setenv bootargs root=/dev/sda1 rw noinitrd console=$consoledev,$baudrate rootdelay=10;ext2load usb 0:1 $loadaddr boot/uImage;ext2load usb 0:1 $fdtaddr boot/p2020rdb.dtb;bootm $loadaddr - $fdtaddr}
 	set 3296 {usb start;setenv bootargs root=/dev/sda1 rw noinitrd console=$consoledev,$baudrate rootdelay=10;ext2load usb 0:1 $loadaddr boot/$bootfile;ext2load usb 0:1 $fdtaddr boot/$fdtfile;bootm $loadaddr - $fdtaddr}
+	set 3297 {usb start;setenv bootargs root=/dev/sda1 rw noinitrd console=$consoledev,$baudrate rootdelay=10;ext2load usb 0:1 $loadaddr boot/$bootfile;ext2load usb 0:1 $fdtaddr boot/$fdtfile;bootm $loadaddr - $fdtaddr}
     set 5401 {setenv bootargs root=/dev/mmcblk0p1 rw rootdelay=10 console=$consoledev,$baudrate;mmc rescan;ext2load mmc 0:1 $loadaddr boot/uImage;ext2load mmc 0:1 $fdtaddr boot/p2020.dtb;bootm $loadaddr - $fdtaddr}
     set 5101 {mmc rescan;setenv bootargs root=/dev/mmcblk0p1 rw console=$consoledev,$baudrate rootdelay=10;ext2load mmc 0:1 $loadaddr boot/uImage;ext2load mmc 0:1 $fdtaddr boot/p2020.dtb;bootm $loadaddr - $fdtaddr}
     set 3924 {usb start;setenv bootargs root=/dev/sda1 rw noinitrd console=$consoledev,$baudrate rootdelay=10;ext2load usb 0:1 $loadaddr boot/uImage;ext2load usb 0:1 $fdtaddr boot/p2020rdb.dtb;bootm $loadaddr - $fdtaddr}
     set 6700 {setenv bootargs root=/dev/sda1 rw console=$consoledev,$baudrate rootdelay=10;usb start;ext2load usb 0:1 $loadaddr boot/uImage;ext2load usb 0:1 $fdtaddr boot/p2020rdb.dtb;bootm $loadaddr - $fdtaddr}
-    set 4654 {setenv bootargs root=/dev/sda1 rw console=$consoledev,$baudrate rootdelay=10;usb start;ext2load usb 0:1 $loadaddr boot/uImage;ext2load usb 0:1 $fdtaddr boot/p2020rdb.dtb;bootm $loadaddr - $fdtaddr}
 
     set framboot ""
 
@@ -770,11 +918,6 @@ proc sUpdate {sPort sDir sIp sPro iPort iPdu sCon sApp} {
         set framboot {setenv bootargs root=/dev/ram rw console=$consoledev,$baudrate;tftp $loadaddr $base/6700/uImage;tftp $fdtaddr $base/6700/p2020rdb.dtb;tftp $ramdiskaddr $base/6700/rootfs.ext2.gz.uboot;bootm $loadaddr $ramdiskaddr $fdtaddr}
     }
 
-
-    if {$sPro == 4654} {
-        set framboot {setenv bootargs root=/dev/ram rw console=$consoledev,$baudrate;tftp $loadaddr $base/4654/uImage;tftp $fdtaddr $base/4654/p2020rdb.dtb;tftp $ramdiskaddr $base/4654/rootfs.ext2.gz.uboot;bootm $loadaddr $ramdiskaddr $fdtaddr}
-    }
-
     if {$sPro == 3290} {
         set bCmd u3290
     } elseif {$sPro == 3780} {
@@ -793,155 +936,19 @@ proc sUpdate {sPort sDir sIp sPro iPort iPdu sCon sApp} {
         set bCmd u3296
     } elseif {$sPro == "6700"} {
         set bCmd u6700
-    } elseif {$sPro == "4654"} {
-        set bCmd u4654
     }
 
+
+    if {$sConsole == 123} {
 	userKickNew $sPort
-    if {$sPro == "3960"} {
-
-        tftpCopy $sIp build $sDir
-		rPdu $iPdu $iPort
-        after 2000
-        spawn telnet 10.10.50.123 20$sPort
-
-        while 1 {
-            expect {
-                "stop autoboot" {
-                    send "\003\r"
-                }
-                "Hit your choice" {
-                    send "\003\r"
-                }
-                -re "=>|Urus-II>|Urus2>|Cabrera2>" {
-                    send "setenv serverip $sIp\r"
-                    break
-                }
-            }
-        }
-
-        while 1 {
-            expect {
-                -re "=>|Urus-II>|Urus2>|Cabrera2>" {
-                    send "setenv ipaddr 10.10.50.160\r"
-                    break
-                }
-            }
-        }
-
-        while 1 {
-            expect {
-                -re "=>|Urus-II>|Urus2>|Cabrera2>" {
-                    send "setenv ipaddr 10.10.50.160\r"
-                    break
-                }
-            }
-        }
-
-        while 1 {
-            expect {
-                -re "=>|Urus-II>|Urus2>|Cabrera2>" {
-                    send "setenv ipaddr 10.10.50.160\r"
-                    break
-                }
-            }
-        }
-
-        while 1 {
-            expect {
-                -re "=>|Urus-II>|Urus2>|Cabrera2>" {
-                    send "setenv netmask 255.255.255.0\r"
-                    break
-                }
-            }
-        }
-
-	    while 1 {
-    	    expect {
-        	    -re "=>|Urus-II>|Urus2>|Cabrera2>" {
-            	    send "tftp 0x1000000 $sIp:picos_ubi.img\r"
-                	break
-            	}
-        	}
-    	}
-
-        while 1 {
-            expect {
-                -re "=>|Urus-II>|Urus2>|Cabrera2>" {
-                    send "nand erase 0xfa00000 0x30600000\r"
-                    break
-                }
-            }
-        }
-
-        while 1 {
-            expect {
-                -re "=>|Urus-II>|Urus2>|Cabrera2>" {
-                    send "nand write 0x1000000 0x10000000 \$filesize\r"
-                    break
-                }
-            }
-        }
-
-
-        while 1 {
-            expect {
-                -re "=>|Urus-II>|Urus2>|Cabrera2>" {
-                    send "setenv u3960 'setenv bootargs ubi.mtd=4 root=ubi0:full_root rw rootfstype=ubifs console=\$consoledev,\$baudrate \$othbootargs;run setmtd;mtdparts;ubi part FULL_ROOT;ubifsmount full_root;run load_kernel;run load_dtb;bootm \$loadaddr - \$fdtaddr'\r"
-                    break
-                }
-            }
-        }
-
-        while 1 {
-            expect {
-                -re "=>|Urus-II>|Urus2>|Cabrera2>" {
-                    send "setenv mfgstat finaltest_ok\r"
-                    break
-                }
-            }
-        }
-
-        while 1 {
-            expect {
-                -re "=>|Urus-II>|Urus2>|Cabrera2>" {
-                    send "setenv bootcmd 'run u3960'\r"
-                    break
-                }
-            }
-        }
-
-        while 1 {
-            expect {
-                -re "=>|Urus-II>|Urus2>|Cabrera2>" {
-                    send "saveenv\r"
-                    break
-                }
-            }
-        }
-
-        while 1 {
-            expect {
-                -re "=>|Urus-II>|Urus2>|Cabrera2>" {
-                    send "run bootcmd\r"
-                    break
-                }
-            }
-        }
-
-        while 1 {
-            expect {
-                "Enter your choice" {
-                    send "1\r"
-                    break
-                }
-            }
-        }
-	} else {
-		rPdu $iPdu $iPort
+   } else {
+       userKick $sPort
+   }
+   
+	rPdu $iPdu $iPort
     	after 2000
 
-    	spawn telnet 10.10.50.123 20$sPort
+    	spawn telnet 10.10.50.$sConsole 20$sPort
 
     	while 1 {
         	expect {
@@ -1071,12 +1078,11 @@ proc sUpdate {sPort sDir sIp sPro iPort iPdu sCon sApp} {
             }
         }
 
-        if {$sPro == "3922" || $sPro == "3296" || $sPro == "3297" || $sPro == "3924" || $sPro == "5401" || $sPro == "5101" || $sPro == "6700" || $sPro == "4654"} {
+        if {$sPro == "3922" || $sPro == "3296" || $sPro == "3297" || $sPro == "3924" || $sPro == "5401" || $sPro == "5101" || $sPro == "6700"} {
             while 1 {
                 expect {
                     -re "=>|Urus-II>|Urus2>|Cabrera2>" {
-                        send "run framboot\r\r\r"
-                        puts "111111111111"
+                        send "run framboot\r"
                         break
                     }
                 }
@@ -1117,11 +1123,10 @@ proc sUpdate {sPort sDir sIp sPro iPort iPdu sCon sApp} {
             	}
         	}
 		} elseif {$sPro == "3920"} {
-            puts "111111111111"
             while 1 {
                 expect {
                     "Enter your choice" {
-                        send "3\r\r"
+                        send "3\r"
 						break
                     }
                 }
@@ -1150,12 +1155,11 @@ proc sUpdate {sPort sDir sIp sPro iPort iPdu sCon sApp} {
                 	}
             	}
         	}
-		} elseif {$sPro == "3922" || $sPro == "3924" || $sPro == "6700" || $sPro == "4654"} {
-puts "222222222222 $sPro"
+		} elseif {$sPro == "3922" || $sPro == "3924" || $sPro == "6700"} {
         	while 1 {
             	expect {
                 	"Attached SCSI disk" {
-                    	send "\r\r\r"
+                    	send "\r"
                     	break
                 	}
             	}
@@ -1170,12 +1174,10 @@ puts "222222222222 $sPro"
                 }
             }
 		} elseif {$sPro == "3930"} {
-puts "3930 88888888888888888888888888"
             while 1 {
                 expect {
                     "Attached SCSI removable disk" {
-puts "aaaaaaaaaaaaaaaaaaaaa"
-                        send "\r\r\r"
+                        send "\r"
                         break
                     }
                 }
@@ -1189,7 +1191,7 @@ puts "aaaaaaaaaaaaaaaaaaaaa"
                     }
                 }
             }
-        } elseif {$sPro == "3296"} {
+        } elseif {$sPro == "3296" || $sPro == "3297"} {
             while 1 {
                 expect {
                     "Attached SCSI removable disk" {
@@ -1245,7 +1247,7 @@ puts "aaaaaaaaaaaaaaaaaaaaa"
                     }
                 }
             }
-		} elseif {$sPro == "3922" || $sPro == "3930" || $sPro == "3296" || $sPro == "3924" || $sPro == "6700" || $sPro == "4654"} {
+		} elseif {$sPro == "3922" || $sPro == "3930" || $sPro == "3296" || $sPro == "3297" || $sPro == "3924" || $sPro == "6700"} {
             while 1 {
                 expect {
                     "#" {
@@ -1383,7 +1385,7 @@ puts "aaaaaaaaaaaaaaaaaaaaa"
         while 1 {
             expect {
                 "#" {
-                    send "ping $sIp\r\r"
+                    send "ping $sIp\r"
                     break
                 }
             }
@@ -1392,7 +1394,7 @@ puts "aaaaaaaaaaaaaaaaaaaaa"
         while 1 {
             expect {
                 "bytes from" {
-                    send "\003\r\r"
+                    send "\003\r"
                     break
                 }
             }
@@ -1754,10 +1756,10 @@ puts "aaaaaaaaaaaaaaaaaaaaa"
 
             while 1 {
                 expect {
-                    -ex "static IP and netmask for the switch" {
+                    -ex "Please set a static IP and netmask for the switch" {
                         send "$oIp/24\r"
                     }
-                    -ex "gateway IP" {
+                    -ex "Please set the gateway IP" {
                         send "[string range $oIp 0 7].1\r"
                     }
                     -ex "root@" {
@@ -2013,9 +2015,7 @@ puts "aaaaaaaaaaaaaaaaaaaaa"
                 }
             }
         }
-	}
-
-}
+  }
 
 set sPort [lindex $argv 0]
 set sIp [lindex $argv 1]
@@ -2027,7 +2027,7 @@ if {$sPort == "" || $sIp == "" || $sCon == "" || $sApp == "" || $sRel == ""} {
     puts "\n===================Usage======================"
     puts "$argv0 sPort sIp sCon sRel"
     puts "===================Usage======================"
-    puts "1. sPort:    the console port of the box (eg. 01 means <10.10.50.123 2001>"
+    puts "1. sPort:    the console port of the box (eg. 01 means 2001)"
     puts "2. sIp:      ip address of server storing image"
     puts "3. sCon:     0 means <delete all files, include pica_startup.boot>, 1 means <delete all files, exclude pica_startup.boot>"
     puts "4. sRel:     0 means <daily version>"
@@ -2042,7 +2042,8 @@ if {$sPort == "" || $sIp == "" || $sCon == "" || $sApp == "" || $sRel == ""} {
     puts "5. sApp:         1"
 } else {
 	sCheck sVer
-	dbPort $sPort iPort sPro iPdu
+	sGetConsole sConsole
+	dbPort $sConsole $sPort iPort sPro iPdu
 
 	set subject $sVer
 	set result [regexp -linestop {\A[0-9]+\Z} $subject]
@@ -2052,10 +2053,12 @@ if {$sPort == "" || $sIp == "" || $sCon == "" || $sApp == "" || $sRel == ""} {
 
             if {$sPro == 6700} {
                 set sDir "build/daily/as6701_32x/$sIm"
-            } elseif {$sPro == 4654} {
-                set sDir "build/daily/es4654bf/$sIm"
             } elseif {$sPro == 3924} {
                 set sDir "build/daily/as5600_52x/$sIm"
+            } elseif {$sPro == 4654} {
+                set sDir "build/daily/as4600_54t/$sIm"
+            }  elseif {$sPro == 3296}  {
+                set sDir "build/daily/3297/$sIm"
             } else {
 		        set sDir "build/daily/$sPro/$sIm"
             }
@@ -2066,5 +2069,5 @@ if {$sPort == "" || $sIp == "" || $sCon == "" || $sApp == "" || $sRel == ""} {
 		set sDir $sVer
 	}
 
-	sUpdate $sPort $sDir $sIp $sPro $iPort $iPdu $sCon $sApp
+	sUpdate $sPort $sDir $sIp $sPro $iPort $iPdu $sCon $sApp $sConsole
 }

@@ -1,28 +1,29 @@
 #! /usr/bin/env python
 
 Usage = """
-Created on 2015-06-16
+Created on 2015-07-01
 @author: lisapi
 @name: buildimage.py
 
 The script is used to build images for pica8,
-supporting branches, 1.1  2.6 verizon 2.6B
-supporting models, 3290 3295 3297 3922 3924 3930 3780 5401 es4654bf as6701_32x as5712_54x niagara2632xl arctica4804i
+supporting branches: 1.1  2.6 verizon 2.6B
+supporting models:3290 3295 3297 3922 3924 3930 3780 5401 es4654bf as6701_32x as5712_54x niagara2632xl arctica4804i niagara2948_6xl HP5712
 
 Usage:
 
-./build.py branch_name server_ip model_name svn_type  is_license depend_version
+./build.py branch_name server_ip model_name svn_type  is_license  is_sdk depend_version
 
 branch_name,      the name of branch (eg, 1.1)
 server_ip,        the server of code (eg. 10.10.50.16)
 model_name,       the name of model (eg. 3290)
 svn_type:         the type of svn (0: del and svn, 1: only svn, 2: do not svn)
 is_license:       the image is licensed (0: no-license, 1: has-license)
+is_sdk:            the image is sdked(0:no make sdk,1:make sdk)
 depend_version:   the depend version of image (set it as current version if it is none)
 
 Example:
 
-./build.py 1.1 10.10.50.16 3290 1 1 
+./build.py 1.1 10.10.50.16 3290 1 1 0
 
 """
 
@@ -45,13 +46,7 @@ pica_xorp_map = {'1.1': 'xorplus',
                  '2.6': 'pica',
                  '2.6B': 'xorplus',
                  'verizon': 'xorplus'}
-
-# Build specific sdk id mapping
-sdk_id_map = {'1.1': '',
-                      '2.6': '',
-                      '2.6B': '',
-                      'verizon': '' }               
-
+         
 # Build platform sdk mapping 
 sdk_dict = {'3290': 'sdk-xgs-robo-6.3.2',
                '3295': 'sdk-xgs-robo-6.3.2',
@@ -66,9 +61,16 @@ sdk_dict = {'3290': 'sdk-xgs-robo-6.3.2',
                'es4654bf': 'sdk-xgs-robo-6.3.2',
                'as6701_32x': 'sdk-xgs-robo-6.3.2',
                'niagara2632xl': 'sdk-xgs-robo-6.3.9',
+               'niagara2948_6xl': 'sdk-xgs-robo-6.3.9',
                'as5712_54x': 'sdk-xgs-robo-6.3.9',
+               'HP5712': 'sdk-xgs-robo-6.3.9',
                'arctica4804i': 'sdk-xgs-robo-6.3.2'}
 
+# Build specific sdk id mapping
+sdk_id_map = {'1.1': '',
+                      '2.6': '',
+                      '2.6B': '',
+                      'verizon': '' }    
           
 # Build platform kernel mapping     
 kernel_dict = {'3290': 'linux-2.6.27-lb9a',
@@ -84,7 +86,9 @@ kernel_dict = {'3290': 'linux-2.6.27-lb9a',
                    'es4654bf': 'linux-3.4.82',
                    'as6701_32x': 'linux-3.4.82',
                    'niagara2632xl': 'linux-3.4.82-x86_64',
+                   'niagara2948_6xl': 'linux-3.4.82-x86_64',
                    'as5712_54x': 'linux-3.4.82-x86_64',
+                   'HP5712': 'linux-3.4.82-x86_64',
                    'arctica4804i': 'linux-3.2.35-onie'}
        
 # Build platform  powerpcspe mapping 
@@ -108,7 +112,9 @@ box_name_map = {'3290': 'pronto3290',
                'es4654bf': 'es4654bf',
                'as6701_32x': 'as6701_32x',
                'niagara2632xl': 'niagara2632xl',
+               'niagara2948_6xl': 'niagara2948-6xl',
                'as5712_54x': 'as5712_54x',
+               'HP5712': 'as5712_54x',
                'arctica4804i': 'arctica4804i'}
 
 
@@ -126,7 +132,9 @@ box_map = {'3290': 'p3290',
                'es4654bf': 'es4654bf',
                'as6701_32x': 'as6701_32x',
                'niagara2632xl': 'niagara2632xl',
+               'niagara2948_6xl': 'niagara2948-6xl',
                'as5712_54x': 'as5712_54x',
+               'HP5712': 'as5712_54x',
                'arctica4804i': 'arctica4804i'}
 
 #Image dir name mapping
@@ -143,7 +151,9 @@ model_dir_name = {'3290': '3290',
                'es4654bf': 'as4600_54t',
                'as6701_32x': 'as6701_32x',
                'niagara2632xl': 'niagara2632xl',
+               'niagara2948_6xl': 'niagara2948_6xl',
                'as5712_54x': 'as5712_54x',
+               'HP5712': 'as5712_54x',
                'arctica4804i': 'arctica4804i'}
    
 # Build os directory mapping
@@ -174,7 +184,9 @@ cross_compile_map = {'3290': 'powerpc-linux',
                     'es4654bf': 'powerpc-linux-gnuspe',
                     'as6701_32x': 'powerpc-linux-gnuspe',
                     'niagara2632xl': '',
+                    'niagara2948_6xl': '',
                     'as5712_54x': '',
+                    'HP5712': '',
                     'arctica4804i': 'powerpc-linux-gnuspe'}
 
 # Build ovs host type name mapping
@@ -191,7 +203,9 @@ host_type_map = {'3290': 'powerpc-linux',
                  'es4654bf': 'powerpc-linux-gnuspe',
                  'as6701_32x': 'powerpc-linux-gnuspe',
                  'niagara2632xl': '',
+                 'niagara2948_6xl': '',
                  'as5712_54x': '',
+                 'HP5712': '',
                  'arctica4804i': 'powerpc-linux-gnuspe'}
                  
 # Build ovs model name mapping 
@@ -208,7 +222,9 @@ ovs_model_map = {'3290': '3290new',
                     'es4654bf': 'es4654bf',
                     'as6701_32x': 'as6701_32x',
                     'niagara2632xl': 'niagara2632xl',
+                    'niagara2948_6xl': 'niagara2948_6xl',
                     'as5712_54x': 'as5712_54x',
+                    'HP5712': 'as5712_54x',
                     'arctica4804i': 'arctica4804i'}
                     
                                    
@@ -222,7 +238,7 @@ pica_config_name = {}
 for branch in branch_id:
     pica_config_name.setdefault(branch, {})
     for model in model_type:
-        if model in ['as5712_54x', 'niagara2632xl']:
+        if model in ['as5712_54x', 'niagara2632xl', 'niagara2948_6xl','HP5712']:
             sDirs = '/home/%s/%s/release/pica8/branches/%s' % (user_name, re.search("([0-9]{4})", model).group(), branch)
             hTmp = rel_name_map[branch]
             oDir = os_name_map[branch]
@@ -243,7 +259,7 @@ for branch in branch_id:
                                         --with-chip_sdk_lib_path=%s/pica/exlib/%s.%s \
                                         --with-chip_sdk_deprecated_version=no \
                                         --with-chip_sdk_root_path=%s/%s/sdk/%s \
-                                        ' % (sDirs, hTmp, oDir, model, pica_xorp_map[branch], hType, sNoDug, sOpt, box_name_map[model], sDirs, sBcm, box_map[model], sDirs, hTmp, sLib)  
+                                        ' % (sDirs, hTmp, oDir, box_name_map[model], pica_xorp_map[branch], hType, sNoDug, sOpt, model_dir_name[model], sDirs, sBcm, box_map[model], sDirs, hTmp, sLib)     
         elif model in ['arctica4804i']:
             sDirs = '/home/%s/%s/release/pica8/branches/%s' % (user_name, re.search("([0-9]{4})", model).group(), branch)
             hTmp = rel_name_map[branch]
@@ -292,11 +308,11 @@ ovs_config_name = {}
 for branch in branch_id:
     ovs_config_name.setdefault(branch, {})
     for model in model_type:
-        if model in ['as5712_54x', 'es4654bf', 'as6701_32x', 'niagara2632xl']:
+        if model in ['as5712_54x', 'es4654bf', 'as6701_32x', 'niagara2632xl', 'niagara2948_6xl','HP5712']:
             hType = host_type_map[model]
             pBox = ovs_model_map[model]
             ovs_config_name[branch][model] = './configure --host=%s --with-%s -with-switchdir=/ovs \
-                                               ' % (hType, pBox)
+                                               ' % (hType, pBox)                                              
         elif model in ['arctica4804i']:
             hType = host_type_map[model]
             pBox = '%s%s' % ('3296','new')
@@ -323,7 +339,9 @@ onie_name_map = {'3290': 'quanta_lb9a',
                'es4654bf': 'accton_as4600_54t',
                'as6701_32x': 'accton_as6701_32x',
                'niagara2632xl': 'accton_niagara2632xl',
+               'niagara2948_6xl': 'accton_niagara2948_6xl',
                'as5712_54x': 'accton_as5712_54x',
+               'HP5712': 'HP5712',
                'arctica4804i': 'penguin_arctica4804i'}
 
 # Build image model name
@@ -340,7 +358,9 @@ image_model_name = {'3290': 'P3290',
                'es4654bf': 'as4600_54t',
                'as6701_32x': 'as6701_32x',
                'niagara2632xl': 'niagara2632xl',
+               'niagara2948_6xl': 'niagara2948_6xl',
                'as5712_54x': 'as5712_54x',
+               'HP5712': 'HP5712',
                'arctica4804i': 'arctica4804i'}
 
 # Build image directory name
@@ -357,7 +377,9 @@ image_dir_name = {'3290': '/tftpboot/%s/daily/3290' % user_name,
                'es4654bf': '/tftpboot/%s/daily/as4600_54t' % user_name,
                'as6701_32x': '/tftpboot/%s/daily/as6701_32x' % user_name,
                'niagara2632xl': '/tftpboot/%s/daily/niagara2632xl' % user_name,
+               'niagara2948_6xl': '/tftpboot/%s/daily/niagara2948_6xl' % user_name,
                'as5712_54x': '/tftpboot/%s/daily/as5712_54x' % user_name,
+               'HP5712': '/tftpboot/%s/daily/as5712_54x' % user_name,
                'arctica4804i': '/tftpboot/%s/daily/arctica4804i' % user_name}
 
 ######define functions for build image
@@ -597,22 +619,22 @@ def execute_oms_make(server_ip=None, branch_name=None, model_name=None):
     # Make
     sDirs = '/home/%s/%s/release/pica8/branches/%s' % (user_name, re.search("([0-9]{4})", model_name).group(), branch_name)
     hTmp = rel_name_map[branch_name]
-    oDir = os_name_map[branch_name]    
-    execute_send_expect(child=child, commands=['python build.py %s %s/%s/%s v2.0' % (model_name, sDirs, hTmp, oDir)])
-
-    
+    oDir = os_name_map[branch_name] 
+    execute_send_expect(child=child, commands=['python build.py %s %s/%s/%s v2.0' % (box_name_map[model], sDirs, hTmp, oDir)])
+      
+   
 ###### Os-dev build
 def execute_os_make(server_ip=None, branch_name=None, 
                    model_name=None, current_version=None, 
                    depend_version=None, reversion_id=None):
 
     # Get  id
-    child = server_ssh_login(server_ip=server_ip)
-    
+    child = server_ssh_login(server_ip=server_ip)   
     sDirs = '/home/%s/%s/release/pica8/branches/%s' % (user_name, re.search("([0-9]{4})", model_name).group(), branch_name)
     hTmp = rel_name_map[branch_name]
     oDir = os_name_map[branch_name]
-                
+    sLib =  sdk_dict[model_name]   
+    
     # Codes directory
     dest_dir = '%s/%s/%s/%s' % (sDirs, hTmp, oDir, box_name_map[model_name])
     execute_send_expect(child=child, commands=['cd %s' % dest_dir])
@@ -625,17 +647,13 @@ def execute_os_make(server_ip=None, branch_name=None,
                ]
     execute_send_expect(child=child, commands=commands)
     
-    if model_name not in ['as5712_54x', 'niagara2632xl']:
+    if model_name not in ['as5712_54x', 'niagara2632xl','niagara2948_6xl','HP5712']:
         commands = [
                 'export ARCH=powerpc',
                 ]
         execute_send_expect(child=child, commands=commands) 
         
     # make 
-    sDirs = '/home/%s/%s/release/pica8/branches/%s' % (user_name, re.search("([0-9]{4})", model_name).group(), branch_name)
-    hTmp = rel_name_map[branch_name]
-    sLib =  sdk_dict[model_name]
-    oDir = os_name_map[branch_name]       
     sVersion = current_version
     if depend_version is None:
         sDepend = sVersion
@@ -654,12 +672,17 @@ def execute_os_make(server_ip=None, branch_name=None,
                                                               rId, sDepend, rId, sDepend)
 
        
-    if model_name in ['as5712_54x', 'niagara2632xl']:
+    if model_name in ['as5712_54x', 'niagara2632xl', 'niagara2948_6xl']:
         lBox = string.upper(box_name_map[model_name])
         commands = [
                 'sudo make fast PICA8=1 %s=1 SDK=%s/%s/sdk/%s BRANCH=%s%s' % (lBox, sDirs, hTmp,
                                                                               sLib,branch_name,sRevison)
-                ]
+                ]               
+    elif model_name in ['HP5712']:
+        commands = [
+                'sudo make fast PICA8=1 %s=1 SDK=%s/%s/sdk/%s BRANCH=%s%s' % ('HP5712', sDirs, hTmp,
+                                                                              sLib,branch_name,sRevison)
+                ]           
     else:
         lBox = string.upper(box_name_map[model_name])
         commands = [
@@ -667,6 +690,72 @@ def execute_os_make(server_ip=None, branch_name=None,
                     ]      
     execute_send_expect(child=child, commands=commands)   
 
+###### SDK build
+def execute_sdk_make(server_ip=None, branch_name=None, 
+                   model_name=None, current_version=None, 
+                   depend_version=None, reversion_id=None):
+
+    # Get  id
+    child = server_ssh_login(server_ip=server_ip)   
+    sDirs = '/home/%s/%s/release/pica8/branches/%s' % (user_name, re.search("([0-9]{4})", model_name).group(), branch_name)
+    hTmp = rel_name_map[branch_name]
+    oDir = os_name_map[branch_name]
+    sLib =  sdk_dict[model_name]
+   
+    # Codes directory
+    dest_dir = '%s/%s/%s/%s' % (sDirs, hTmp, oDir, box_name_map[model_name])
+    execute_send_expect(child=child, commands=['cd %s' % dest_dir])
+   
+    # Make
+    commands = [
+              'export CROSS_COMPILE=%s' % cross_compile_map[model_name],
+              'export CROSS_COMPILE_PATH=/tools/eldk4.2/usr/',
+              'export PATH=$CROSS_COMPILE_PATH/bin:$PATH',
+               ]
+    execute_send_expect(child=child, commands=commands)
+    
+    if model_name not in ['as5712_54x', 'niagara2632xl','niagara2948_6xl','HP5712']:
+        commands = [
+                'export ARCH=powerpc',
+                ]
+        execute_send_expect(child=child, commands=commands) 
+        
+    # make sdk  
+    sVersion = current_version
+    if depend_version is None:
+        sDepend = sVersion
+    else:
+        sDepend = depend_version
+    rId = reversion_id
+    sRevison =  " REVISION_NUM=%s RELEASE_VER=%s \
+                      LINUX_DEB_VERSION=%s-%s \
+                      TOOLS_DEB_VERSION=%s-%s \
+                      XORP_LINUX_DEB_DEPEND_VERSION=%s-%s \
+                      OVS_LINUX_DEB_DEPEND_VERSION=%s-%s \
+                      XORP_TOOLS_DEB_DEPEND_VERSION=%s-%s \
+                      OVS_TOOLS_DEB_DEPEND_VERSION=%s-%s"  % (sVersion, rId, rId, 
+                                                              sDepend, rId, sDepend,
+                                                              rId, sDepend, rId, sDepend,
+                                                              rId, sDepend, rId, sDepend)
+
+       
+    if model_name in ['as5712_54x', 'niagara2632xl', 'niagara2948_6xl']:
+        lBox = string.upper(box_name_map[model_name])
+        commands = [
+                'sudo make BCM_SDK_ALL  PICA8=1 %s=1 SDK=%s/%s/sdk/%s BRANCH=%s%s' % (lBox, sDirs, hTmp,
+                                                                              sLib,branch_name,sRevison)
+                ]
+    elif  model_name in ['HP5712']:
+        commands = [
+                'sudo make BCM_SDK_ALL  PICA8=1 %s=1 SDK=%s/%s/sdk/%s BRANCH=%s%s' % ('HP5712', sDirs, hTmp,
+                                                                              sLib,branch_name,sRevison)
+                ]        
+    else:
+        lBox = string.upper(box_name_map[model_name])
+        commands = [
+                'sudo make BCM_SDK_ALL %s=1 SDK=%s/%s/sdk/%s BRANCH=%s%s' % (lBox, sDirs, hTmp, sLib,branch_name,sRevison)  
+                    ]      
+    execute_send_expect(child=child, commands=commands)   
     
 ###### Copy the build images
 def execute_image_copy(server_ip=None, branch_name=None, model_name=None, reversion_id=None, version_number=None):
@@ -683,7 +772,7 @@ def execute_image_copy(server_ip=None, branch_name=None, model_name=None, revers
     execute_send_expect(child=child, commands=['cd %s' % dest_dir])
     
     # Do the copy
-    if model_name in ['as5712_54x', 'niagara2632xl']:
+    if model_name in ['as5712_54x', 'niagara2632xl','niagara2948_6xl']:
         ppcOrX86 = 'x86'
         copyCmd = 'scp'
         dirIp = '%s@10.10.50.16:' % user_name
@@ -804,15 +893,21 @@ def execute_image_copy(server_ip=None, branch_name=None, model_name=None, revers
         
 ###### Execute main 
 def execute_main(server_ip=None, svn_type=None, branch_name=None, 
-                model_name=None, is_license=None, depend_version=None):
+                model_name=None, is_license=None,is_sdk=None,depend_version=None):
 
     if model_name in ["as5712_54x"] and server_ip not in ["10.10.50.22"]:
-        print 'platform of as5712_54x image can only be built at 10.10.50.22!'
+        print 'platform of as5712_54x image can only be built on 10.10.50.22!'
         sys.exit()
+    if model_name in ['HP5712'] and server_ip not in ['10.10.50.22']:
+        print 'platform of HP5712 image can only be built on 10.10.50.22! '
 
     if model_name in ["niagara2632xl"] and server_ip not in ["10.10.50.22"]:
-        print 'platform of niagara2632xl image can only be built at 10.10.50.22!'
+        print 'platform of niagara2632xl image can only be built on 10.10.50.22!'
         sys.exit()
+        
+    if model_name in ["niagara2948_6xl"] and server_ip not in ["10.10.50.22"]:
+        print 'platform of niagara2948_6xl image can only be built on 10.10.50.22!'
+        sys.exit()        
 
     if is_license == '0':
        is_license = ""
@@ -820,9 +915,10 @@ def execute_main(server_ip=None, svn_type=None, branch_name=None,
         is_license = '--with-license'
 
     svn_type = int(svn_type)
+    print '******The value svn_type:', svn_type    
     print '******The value is_license:', is_license
-    print '******The value svn_type:', svn_type
-
+    print '******The value is_sdk:', is_sdk
+    
     print "\n************ Svn Clean/Up ************\n"
     execute_svn_update(server_ip=server_ip, svn_type=svn_type, branch_name=branch_name, model_name=model_name)
     current_version = get_version_number(server_ip=server_ip, branch_name=branch_name, model_name=model_name)
@@ -830,48 +926,81 @@ def execute_main(server_ip=None, svn_type=None, branch_name=None,
 
     if depend_version is None:
         depend_version = current_version
-    print "\n************ PICA Make ************\n"    
-    execute_pica_make(server_ip=server_ip, 
-                     branch_name=branch_name, 
-                     model_name=model_name, 
-                     is_license=is_license,                         
-                     current_version=current_version,
-                     reversion_id=reversion_id)
-    print "\n************ OVS Make ************\n"
-    execute_ovs_make(server_ip=server_ip, 
-                    branch_name=branch_name, 
-                    model_name=model_name,  
-                    is_license=is_license,                         
-                    current_version=current_version,
-                    reversion_id=reversion_id)
-    print "\n************ OMS Make ************\n"
-    execute_oms_make(server_ip=server_ip, 
-                    branch_name=branch_name, 
-                    model_name=model_name)
-    print "\n************ OS Make ************\n"
-    execute_os_make(server_ip=server_ip, 
-                   branch_name=branch_name,  
-                   model_name=model_name,
-                   current_version=current_version, 
-                   depend_version=depend_version, 
-                   reversion_id=reversion_id)   
+        
+    if is_sdk == '0':
+        print "\n************ PICA Make ************\n"    
+        execute_pica_make(server_ip=server_ip, 
+                         branch_name=branch_name, 
+                         model_name=model_name, 
+                         is_license=is_license,                         
+                         current_version=current_version,
+                         reversion_id=reversion_id)
+        print "\n************ OVS Make ************\n"
+        execute_ovs_make(server_ip=server_ip, 
+                        branch_name=branch_name, 
+                        model_name=model_name,  
+                        is_license=is_license,                         
+                        current_version=current_version,
+                        reversion_id=reversion_id)
+        print "\n************ OMS Make ************\n"
+        execute_oms_make(server_ip=server_ip, 
+                        branch_name=branch_name, 
+                        model_name=model_name)
+        print "\n************ OS Make ************\n"
+        execute_os_make(server_ip=server_ip, 
+                       branch_name=branch_name,  
+                       model_name=model_name,
+                       current_version=current_version, 
+                       depend_version=depend_version, 
+                       reversion_id=reversion_id)   
+    else:  
+        print "\n************ SDK Make ************\n"
+        execute_sdk_make(server_ip=server_ip, 
+                       branch_name=branch_name,  
+                       model_name=model_name,
+                       current_version=current_version, 
+                       depend_version=depend_version, 
+                       reversion_id=reversion_id)         
+        print "\n************ PICA Make ************\n"    
+        execute_pica_make(server_ip=server_ip, 
+                         branch_name=branch_name, 
+                         model_name=model_name, 
+                         is_license=is_license,                         
+                         current_version=current_version,
+                         reversion_id=reversion_id)
+        print "\n************ OVS Make ************\n"
+        execute_ovs_make(server_ip=server_ip, 
+                        branch_name=branch_name, 
+                        model_name=model_name,  
+                        is_license=is_license,                         
+                        current_version=current_version,
+                        reversion_id=reversion_id)
+        print "\n************ OMS Make ************\n"
+        execute_oms_make(server_ip=server_ip, 
+                        branch_name=branch_name, 
+                        model_name=model_name)
+        print "\n************ OS Make ************\n"
+        execute_os_make(server_ip=server_ip, 
+                       branch_name=branch_name,  
+                       model_name=model_name,
+                       current_version=current_version, 
+                       depend_version=depend_version, 
+                       reversion_id=reversion_id)   
     print "\n************ Image Copy ************\n"
-    execute_image_copy(server_ip=server_ip, branch_name=branch_name, model_name=model_name, reversion_id=reversion_id, version_number=current_version)
-
+    execute_image_copy(server_ip=server_ip, branch_name=branch_name, model_name=model_name, reversion_id=reversion_id, version_number=current_version)        
 
 print 'You entered: ', len(sys.argv), 'arguments...'
 print 'they are: ', str(sys.argv)
 
-if len(sys.argv) < 6:
+if len(sys.argv) < 7:
     print "\n********You are missing some parameters********\n"
     print Usage
     sys.exit(1)
-elif len(sys.argv) == 6:
-    branch_name,server_ip,model_name,svn_type,is_license= [w for w in sys.argv[1:]]
+elif len(sys.argv) == 7:
+    branch_name,server_ip,model_name,svn_type,is_license,is_sdk= [w for w in sys.argv[1:]]
     execute_main(server_ip=server_ip, svn_type=svn_type, branch_name=branch_name, 
-                model_name=model_name, is_license=is_license)
-    
+                model_name=model_name, is_license=is_license,is_sdk=is_sdk)    
 else:
-    branch_name,server_ip,model_name,svn_type,is_license,depend_version= [w for w in sys.argv[1:]]
+    branch_name,server_ip,model_name,svn_type,is_license,is_sdk,depend_version= [w for w in sys.argv[1:]]
     execute_main(server_ip=server_ip, svn_type=svn_type, branch_name=branch_name, 
-                model_name=model_name, is_license=is_license,depend_version=depend_version)
+                model_name=model_name, is_license=is_license,is_sdk=is_sdk,depend_version=depend_version)

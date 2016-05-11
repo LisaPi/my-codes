@@ -41,7 +41,7 @@ image_name = {'3290':'P3290',
               '4654':'as4600_54t',
               '6701':'as6701_32x',
               '2632':'niagara2632xl',
-              '5712':'as5712_54t',
+              '5712':'as5712_54x',
               '4804':'arctica4804i'}
 
 def ssh_login(server_ip=None):

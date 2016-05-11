@@ -13,68 +13,26 @@ proc GetInstallerImage {sIp sPo sIm {sVer 0}} {
     global dir_name
     
     #onie foramt  mapping  
-    set onie_name [dict create "3290" "quanta_lb9a" \
-                                 "3295" "quanta_lb9" \
-                                 "3297" "celestica_d1012" \
-                                 "3296" "celestica_d1012" \
-                                 "3930" "celestica_d2030" \
-                                 "3920" "quanta_ly2" \
-                                 "3922" "accton_as5610_52x" \
-                                 "3924" "accton_as5600_52x" \
-                                 "3780" "quanta_lb8" \
-                                 "5101" "foxconn_cabrera" \
-                                 "5401" "foxconn_urus" \
-                                 "4654" "accton_as4600_54t" \
-                                 "6701" "accton_as6701_32x" \
-                                 "2632" "im_niagara2632xl" \
+    set onie_name [dict create "2632" "im_niagara2632xl" \
                                  "2948" "im_niagara2948_6xl" \
-                                 "5712" "accton_as5712_54x" \
-                                 "4610" "accton_as4610_54p" \
-                                 "7032" "inventec_dcs7032q28" \
-                                 "4804" "penguin_arctica4804i" ]
+                                 "5712" "*5712*" \
+                                 "671232" "*6712*" \
+                                 "7032" "inventec_dcs7032q28" ]
     
     
     #onie platform foramt  mapping 
-    set onie_format  [dict create "3290"  "powerpc" \
-                                  "3295" "powerpc" \
-                                  "3297" "powerpc" \
-                                  "3296" "powerpc" \
-                                  "3930" "powerpc" \
-                                  "3920" "powerpc" \
-                                  "3922" "powerpc" \
-                                  "3924" "powerpc" \
-                                  "3780" "powerpc" \
-                                  "5101" "powerpc" \
-                                  "5401" "powerpc" \
-                                  "4654" "powerpc" \
-                                  "6701" "powerpc" \
-                                  "2632" "x86" \
+    set onie_format  [dict create   "2632" "x86" \
                                   "2948" "x86" \
                                   "5712" "x86" \
-                                  "4610" "arm" \
-                                  "7032" "x86" \
-                                  "4804" "powerpc"]
+                                  "671232"  "x86"\
+                                  "7032" "x86" ]
 
     #box dir mapping  
-    set dir_name [dict create "3290" "3290" \
-                                    "3295" "3295" \
-                                    "3297" "3297" \
-                                    "3296" "3297" \
-                                    "3930" "3930" \
-                                    "3920" "3920" \
-                                    "3922" "3922" \
-                                    "3924" "as5600_52x" \
-                                    "3780" "3780" \
-                                    "5101" "5101" \
-                                    "5401" "5401" \
-                                    "4654" "as4600_54t" \
-                                    "6701" "as6701_32x" \
-                                    "2632" "niagara2632xl" \
+    set dir_name [dict create "2632" "niagara2632xl" \
                                     "2948" "niagara2948_6xl" \
                                     "5712" "as5712_54x" \
-                                    "4610" "as4610_54p" \
-                                    "7032" "dcs7032q28" \
-                                    "4804" "arctica4804i" ]
+                                    "671232" "as6712_32x" \
+                                    "7032" "dcs7032q28" ]
                                       
     set sPro [dict get $dir_name $sPo ]                               
     set oBox  [dict get $onie_format  $sPo ] 
@@ -99,11 +57,11 @@ proc GetInstallerImage {sIp sPo sIm {sVer 0}} {
     if {$sVer == 0} {
         send "ls -lt onie-installer-$oBox-$Onie*.bin\r"
         expect -re "(rw\[^\r]*)\r\n"
-        regexp "(onie-installer-$oBox-$Onie-picos-\[0-9.a-zA-Z]+(\[-a-zA-Z0-9.]+)?.bin)" $expect_out(buffer) sTmp sIms
+        regexp "(onie-installer-$oBox-\[_0-9a-zA-Z]+-picos-\[0-9.a-zA-Z]+(\[-a-zA-Z0-9.]+)?.bin)" $expect_out(buffer) sTmp sIms
     } else {
         send "ls -lt onie-installer-$oBox-$Onie*$sVer*.bin\r"
         expect -re "(rw\[^\r]*)\r\n"
-        regexp "(onie-installer-$oBox-$Onie-picos-\[0-9.a-zA-Z]+(\[-a-zA-Z0-9.]+)?.bin)" $expect_out(buffer) sTmp sIms
+        regexp "(onie-installer-$oBox-\[_0-9a-zA-Z]+-picos-\[0-9.a-zA-Z]+(\[-a-zA-Z0-9.]+)?.bin)" $expect_out(buffer) sTmp sIms
     }
     send "exit\r"
     expect "logout"
@@ -303,7 +261,7 @@ proc pduKill {iPdu} {
 proc rPdu {iPdu iPort} {
 
      # reload
-     if {$iPdu == "91" || $iPdu == "92" || $iPdu == "93"} {
+     if {$iPdu == "91" || $iPdu == "92" || $iPdu == "93" || $iPdu == "94" || $iPdu == "95" || $iPdu == "96"} {
 
        kickPduOut $iPdu
     	spawn telnet 10.10.50.$iPdu
@@ -406,176 +364,6 @@ proc dbPort {sPort iPort sPro iPdu sPco} {
     upvar $sPro sPros
     upvar $iPdu iPdus
     upvar $sPco sPcos
-    
-    kickPduOut 91
-    spawn telnet 10.10.50.91
-    while 1 {
-        expect {
-            "User Name" {
-                send "apc\r"
-            }
-            "Password" {
-                send "apc\r"
-            }
-            ">" {
-                send "1\r"
-                break
-            }
-        }
-    }
-
-    while 1 {
-        expect {
-            ">" {
-                send "2\r\r"
-                break
-            }
-        }
-    }
-
-    while 1 {
-        expect {
-            ">" {
-                send "1\r\r"
-                expect -re "(.*)Master Control"
-                set sDbPort $expect_out(buffer)
-                send "\r"
-                break
-            }
-        }
-    }
-
-    while 1 {
-        expect {
-            "<ESC>- Back" {send \033; exp_continue}
-            "Press <ENTER> to continue..." {send "\r"; exp_continue}
-            "<ESC>- Main Menu" {send "4\r";break}
-        }
-    }
-
-    puts "\n########################"
-    puts "sDbPort:$sDbPort\n"
-    puts "########################\n"
-
-    catch close
-
-    regexp "(\[0-9]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_i(\[0-9]+)_c(\[0-9]+)" $sDbPort sTmp iPorts sPros sIps sPcos
-    if {[info exists iPorts] == 1} {
-        set iPdus 91
-        return
-    }
-
-    kickPduOut 90
-    spawn telnet 10.10.50.90
-
-    while 1 {
-        expect {
-            "User Name" {
-                send "apc\r"
-            }
-            "Password" {
-                send "apc\r"
-            }
-            ">" {
-                send "1\r"
-                break
-            }
-        }
-    }
-
-    while 1 {
-        expect {
-            ">" {
-                send "3\r\r"
-				expect -re "(.*)Master Control"
-				set sDbPort $expect_out(buffer)
-				send "\r"
-				break
-            }
-        }
-    }
-
-    expect "Press <ENTER> to continue..."
-    send "\r"
-
-    while 1 {
-        expect {
-            "<ESC>- Back" {send \033; exp_continue}
-            "Press <ENTER> to continue..." {send "\r"; exp_continue}
-            "<ESC>- Main Menu" {send "4\r";break}
-        }
-    }
-
-	puts "\n########################"
-	puts "sDbPort:$sDbPort\n"
-    puts "########################\n"
-
-	catch close
-
-	regexp "(\[0-9]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_i(\[0-9]+)_c(\[0-9]+)" $sDbPort sTmp iPorts sPros sIps sPcos
-	if {[info exists iPorts] == 1} {
-		set iPdus 90 
-		return 
-	}
-
-    kickPduOut 91
-    spawn telnet 10.10.50.91
-
-    while 1 {
-        expect {
-            "User Name" {
-                send "apc\r"
-            }
-            "Password" {
-                send "apc\r"
-            }
-            ">" {
-                send "1\r"
-                break
-            }
-        }
-    }
-
-    while 1 {
-        expect {
-            ">" {
-                send "2\r\r"
-                break
-            }
-        }
-    }
-
-    while 1 {
-        expect {
-            ">" {
-                send "1\r\r"
-                expect -re "(.*)Master Control"
-                set sDbPort $expect_out(buffer)
-                send "\r"
-                break
-            }
-        }
-    }
-
-    while 1 {
-        expect {
-            "<ESC>- Back" {send \033; exp_continue}
-            "Press <ENTER> to continue..." {send "\r"; exp_continue}
-            "<ESC>- Main Menu" {send "4\r";break}
-        }
-    }
-
-    puts "\n########################"
-    puts "sDbPort:$sDbPort\n"
-    puts "########################\n"
-
-    catch close
-
-    regexp "(\[0-9a-z]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_" $sDbPort sTmp iPorts sPros
-    if {[info exists iPorts] == 1} {
-        set iPdus 91
-        return
-    }
 
     kickPduOut 92
     spawn telnet 10.10.50.92
@@ -629,10 +417,235 @@ proc dbPort {sPort iPort sPro iPdu sPco} {
     puts "########################\n"
 
     catch close
-
-    regexp "(\[0-9]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_i(\[0-9]+)_c(\[0-9]+)" $sDbPort sTmp iPorts sPros sIps sPcos
+    regexp "(\[0-9]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_i(\[0-9]+)_\[0-9]-\[0-9]+_c(\[0-9]+)" $sDbPort sTmp iPorts sPros sIps sPcos
     if {[info exists iPorts] == 1} {
         set iPdus 92
+        return
+    }
+
+    kickPduOut 95
+    spawn telnet 10.10.50.95
+    while 1 {
+        expect {
+            "User Name" {
+                send "apc\r"
+            }
+            "Password" {
+                send "apc\r"
+            }
+            ">" {
+                send "1\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            ">" {
+                send "2\r\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            ">" {
+                send "1\r\r"
+                expect -re "(.*)Master Control"
+                set sDbPort $expect_out(buffer)
+                send "\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            "<ESC>- Back" {send \033; exp_continue}
+            "Press <ENTER> to continue..." {send "\r"; exp_continue}
+            "<ESC>- Main Menu" {send "4\r";break}
+        }
+    }
+
+    puts "\n########################"
+    puts "sDbPort:$sDbPort\n"
+    puts "########################\n"
+
+    catch close
+    regexp "(\[0-9]+)-\[ ]+(\[0-9a-z]+)_[set sPort]_i(\[0-9]+)_\[0-9]-\[0-9]+_c(\[0-9]+)" $sDbPort sTmp iPorts sPros sIps sPcos
+    if {[info exists iPorts] == 1} {
+        set iPdus 95
+        return
+    }
+
+    kickPduOut 90
+    spawn telnet 10.10.50.90
+
+    while 1 {
+        expect {
+            "User Name" {
+                send "apc\r"
+            }
+            "Password" {
+                send "apc\r"
+            }
+            ">" {
+                send "1\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            ">" {
+                send "3\r\r"
+				expect -re "(.*)Master Control"
+				set sDbPort $expect_out(buffer)
+				send "\r"
+				break
+            }
+        }
+    }
+
+    expect "Press <ENTER> to continue..."
+    send "\r"
+
+    while 1 {
+        expect {
+            "<ESC>- Back" {send \033; exp_continue}
+            "Press <ENTER> to continue..." {send "\r"; exp_continue}
+            "<ESC>- Main Menu" {send "4\r";break}
+        }
+    }
+
+	puts "\n########################"
+	puts "sDbPort:$sDbPort\n"
+    puts "########################\n"
+
+	catch close
+	regexp "(\[0-9]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_i(\[0-9]+)_\[0-9]-\[0-9]+_c(\[0-9]+)" $sDbPort sTmp iPorts sPros sIps sPcos
+	if {[info exists iPorts] == 1} {
+		set iPdus 90 
+		return 
+	}
+
+    
+    kickPduOut 94
+    spawn telnet 10.10.50.94
+    while 1 {
+        expect {
+            "User Name" {
+                send "apc\r"
+            }
+            "Password" {
+                send "apc\r"
+            }
+            ">" {
+                send "1\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            ">" {
+                send "2\r\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            ">" {
+                send "1\r\r"
+                expect -re "(.*)Master Control"
+                set sDbPort $expect_out(buffer)
+                send "\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            "<ESC>- Back" {send \033; exp_continue}
+            "Press <ENTER> to continue..." {send "\r"; exp_continue}
+            "<ESC>- Main Menu" {send "4\r";break}
+        }
+    }
+
+    puts "\n########################"
+    puts "sDbPort:$sDbPort\n"
+    puts "########################\n"
+
+    catch close
+    regexp "(\[0-9]+)-\[ ]+(\[0-9a-z]+)_[set sPort]_i(\[0-9]+)_\[0-9]-\[0-9]+_c(\[0-9]+)" $sDbPort sTmp iPorts sPros sIps sPcos
+    if {[info exists iPorts] == 1} {
+        set iPdus 94
+        return
+    }
+
+
+    kickPduOut 91
+    spawn telnet 10.10.50.91
+
+    while 1 {
+        expect {
+            "User Name" {
+                send "apc\r"
+            }
+            "Password" {
+                send "apc\r"
+            }
+            ">" {
+                send "1\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            ">" {
+                send "2\r\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            ">" {
+                send "1\r\r"
+                expect -re "(.*)Master Control"
+                set sDbPort $expect_out(buffer)
+                send "\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            "<ESC>- Back" {send \033; exp_continue}
+            "Press <ENTER> to continue..." {send "\r"; exp_continue}
+            "<ESC>- Main Menu" {send "4\r";break}
+        }
+    }
+
+    puts "\n########################"
+    puts "sDbPort:$sDbPort\n"
+    puts "########################\n"
+
+    catch close
+    regexp "(\[0-9]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_i(\[0-9]+)_\[0-9]-\[0-9]+_c(\[0-9]+)" $sDbPort sTmp iPorts sPros sIps sPcos
+    if {[info exists iPorts] == 1} {
+        set iPdus 91
         return
     }
 
@@ -689,9 +702,66 @@ proc dbPort {sPort iPort sPro iPdu sPco} {
 
     catch close
 
-    regexp "(\[0-9]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_i(\[0-9]+)_c(\[0-9]+)" $sDbPort sTmp iPorts sPros sIps sPcos
+    regexp "(\[0-9]+)-\[ ]\\\[--]\[ ]+(\[0-9a-z]+)_[set sPort]_i(\[0-9]+)_\[0-9]-\[0-9]+_c(\[0-9]+)" $sDbPort sTmp iPorts sPros sIps sPcos
     if {[info exists iPorts] == 1} {
         set iPdus 93
+        return
+    }
+
+    kickPduOut 96
+    spawn telnet 10.10.50.96
+    while 1 {
+        expect {
+            "User Name" {
+                send "apc\r"
+            }
+            "Password" {
+                send "apc\r"
+            }
+            ">" {
+                send "1\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            ">" {
+                send "2\r\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            ">" {
+                send "1\r\r"
+                expect -re "(.*)Master Control"
+                set sDbPort $expect_out(buffer)
+                send "\r"
+                break
+            }
+        }
+    }
+
+    while 1 {
+        expect {
+            "<ESC>- Back" {send \033; exp_continue}
+            "Press <ENTER> to continue..." {send "\r"; exp_continue}
+            "<ESC>- Main Menu" {send "4\r";break}
+        }
+    }
+
+    puts "\n########################"
+    puts "sDbPort:$sDbPort\n"
+    puts "########################\n"
+
+    catch close
+    regexp "(\[0-9]+)-\[ ]+(\[0-9a-z]+)_[set sPort]_i(\[0-9]+)_\[0-9]-\[0-9]+_c(\[0-9]+)" $sDbPort sTmp iPorts sPros sIps sPcos
+    if {[info exists iPorts] == 1} {
+        set iPdus 96
         return
     }
 
@@ -712,8 +782,6 @@ proc sUpdate_x86  {sPort sIp sIm sPro iPort iPdu sPco sApp}  {
     	after 1000
       spawn telnet 10.10.50.$sPco 20$sPort
       set timeout -1 
-      #expect "machine restart"
-      #send "\r"
       expect "PicOS"
       send "\x1b\[B"         
       expect "ONIE" 
@@ -724,47 +792,58 @@ proc sUpdate_x86  {sPort sIp sIm sPro iPort iPdu sPco sApp}  {
       send  "\r"
       expect "ONIE:/ #"
       send "onie-nos-install tftp://$sIp/$sIm\r"
-      expect "PicOS Installation" 
-      send "\r" 
       
       while 1 {
+          expect {
+          "/yes:" {
+              exp_send "yes\r"
+              exp_continue
+          }
+          "System installs successfully" {
+              exp_send "\r"
+              break
+          }
+        }
+      }   
+   
+      while 1 {
            expect {
-                "XorPlus login:" {
-                    send "admin\r"
-                }
-                "Password" {
-                    send "pica8\r"
-                }
-                -ex "(current) UNIX password:" {
-                    send "pica8\r"
-                }
-                -ex "Enter new UNIX password:" {
-                    send "123456\r"
-                }
-                -ex "Retype new UNIX password: " {
-                    send "123456\r"
-                }
-                "admin@" {
-                    send "\r"
-                    break
+               "XorPlus login:" {
+                   send "admin\r"
                }
-            }
+               "Password" {
+                   send "pica8\r"
+               }
+               -ex "(current) UNIX password:" {
+                   send "pica8\r"
+               }
+               -ex "Enter new UNIX password:" {
+                   send "123456\r"
+               }
+               -ex "Retype new UNIX password: " {
+                   send "123456\r"
+               }
+               "admin@" {
+                   send "\r"
+                   break
+               }
+           }
        }
- 
+
        while 1 {
            expect {
-                "admin@" {
-                    send "sudo passwd root\r"
-                }
-                "Enter new UNIX password:" {
-                    send "pica8\r"
-                }
-                "Retype new UNIX password: " {
-                    send "pica8\r"
-                     break
-                }
-            }
-        }
+               "admin@" {
+                   send "sudo passwd root\r"
+               }
+               "Enter new UNIX password:" {
+                   send "pica8\r"
+               }
+               "Retype new UNIX password: " {
+                   send "pica8\r"
+                   break
+               }
+           }
+       }      
  
         while 1 {
             expect {
@@ -1227,7 +1306,7 @@ if {$sPort == "" || $sIp == "" || $sApp == ""} {
 	###Get the platform,pdu and console port information
 	dbPort $sPort iPort sPro iPdu sPco
 	puts "********iPort is $iPort; sPro is $sPro; iPdu is $iPdu; sPco is $sPco********"
-       if {[lsearch "2632 5712 2948 7032" $sPro] == -1} {
+       if {[lsearch "2632 5712 2948 7032 671232" $sPro] == -1} {
            puts  "***$sPro is not X86 platform, so exits this update script***"
            exit   
        }
