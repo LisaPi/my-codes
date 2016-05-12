@@ -3,7 +3,6 @@
 # define global config
 global quotes
 global sdk_dir
-#global kernel_dir
 global ppc_dir
 global box_dir
 global box_name
@@ -66,36 +65,6 @@ set sdk_dir [dict create "3290" "sdk-xgs-robo-6.3.2" \
                         "as7512_32x" "xdk-rel-3-1" \
                         "s4048" "sdk-xgs-robo-6.3.9" \
                         "arctica4804i" "sdk-xgs-robo-6.3.2" ]
-                                             
-#kernel mapping  
-#set kernel_dir [dict create "3290" "linux-2.6.27-lb9a" \
-#                           "3295" "linux-2.6.27-lb9a" \
-#                           "3296" "linux-2.6.32-pronto3296" \
-#                           "VCMY-S5000" "linux-2.6.32-pronto3296" \
-#                           "3930" "linux-2.6.32.24-lb8d" \
-#                           "3920" "linux-2.6.32.24-lb8d" \
-#                           "3922" "linux-2.6.32.13-pronto3922" \
-#                           "VCMY-S6000" "linux-2.6.32.13-pronto3922" \
-#                           "3924" "linux-3.4.82" \
-#                           "3780" "linux-2.6.27-lb9a" \
-#                           "5101" "linux-3.4.82" \
-#                           "VCMY-S6100" "linux-3.4.82" \
-#                           "5401" "linux-3.0.48-pronto5401" \
-#                           "VCMY-S8000" "linux-3.0.48-pronto5401" \
-#                           "es4654bf" "linux-3.4.82" \
-#                           "as6701_32x" "linux-3.4.82" \
-#                           "niagara2632xl" "linux-3.4.82-x86_64" \
-#                           "niagara2948_6xl" "linux-3.4.82-x86_64" \
-#                           "as5712_54x" "linux-3.4.82-x86_64" \
-#                           "as6712_32x" "linux-3.4.82-x86_64" \
-#                           "HP6712" "linux-3.4.82-x86_64" \
-#                           "HP5712" "linux-3.4.82-x86_64" \
-#                           "as4610" "linux-3.6.5-accton" \
-#                           "dcs7032q28" "linux-3.2.35-inventec" \
-#                           "msh8910" "linux-3.4.82" \
-#                           "as7512_32x" "linux-3.4.82-x86_64" \
-#                           "s4048" "linux-3.4.82-x86_64" \
-#                           "arctica4804i" "linux-3.2.35-onie" ]
                    
 #powerpc mapping 
 set ppc_dir  [dict create "1.1" "rootfs-debian-basic" \
@@ -504,13 +473,13 @@ proc imageRm {sName sDir sIp sType sBox} {
         while 1 {
             expect {
                 "$sName@" {
-                    send "sudo git reset --hard origin/$sBrs\r"
+                    send "git reset --hard origin/$sBrs\r"
                     break
                 }
             }
         }
         
-      while 1 {
+      while 0 {
             expect {
             "$sName@" {
                 exp_send "git pull\r"
@@ -567,6 +536,63 @@ proc imageRm {sName sDir sIp sType sBox} {
   }  
 }
 
+
+######Clear the make environment after making
+proc clearRm {sName sDir sIp sBox} {
+
+    regexp "branches/(\[-.0-9a-zA-Z]+)" $sDir sTmp sBrs   
+    set timeout -1
+    set sDirs $sDir
+    global os_dir
+    set oDir [dict get $os_dir  $sBrs ] 
+    regexp "(.*release/pica8/branches)/\[-.0-9a-zA-Z]+" $sDir sTmp Dir 
+    puts "\n\n\nsBrs:$sBrs oDir:$oDir Dir:$Dir sDirs:$sDirs\n\n"  
+    
+    spawn ssh $sName@$sIp
+    while 1 {
+        expect {
+            "yes/no" {
+                send "yes\r"
+            }
+            "assword:" {
+                send "$sName\r"
+            }
+            "$sName@" {
+                send "\r"
+                break
+            }
+        }
+    }   
+    
+     while 1 {
+         expect {
+             "$sName@" {
+                 send "cd $sDirs\r"
+                 break
+             }
+         }
+     }
+
+      while 1 {
+           expect {
+              "$sName@" {
+                  send "sudo git clean -f -d -x\r"
+                  break
+              }
+          }
+      }
+
+      while 1 {
+          expect {
+              "$sName@" {
+                  send "\r"
+                  break
+              }
+          }
+      }       
+}
+
+
 ######Get the version number 
 proc  pica8GetIdNumber {sName sDir sIp} {
 
@@ -622,7 +648,6 @@ proc pica8PicaMake {sName sDir sIp sBuffer sBox sOpt sVersion rId sLic sBrand sC
     regexp "branches/(\[-.0-9a-zA-Z]+)" $sDir sTmp sBrs   	
     global quotes
     global sdk_dir
-    #global kernel_dir
     global ppc_dir
     global box_dir
     global box_name
@@ -644,7 +669,6 @@ proc pica8PicaMake {sName sDir sIp sBuffer sBox sOpt sVersion rId sLic sBrand sC
     set hTmp [dict get $rel_dir  $sBrs ] 
     set eBox [dict get $box_dir  $sBox ] 
     set sPow [dict get $ppc_dir  $sBrs]
-#    set sLin [dict get $kernel_dir  $sBox]
     set hType [dict get $cross_dir  $sBox]
     set cType [dict get $cross_dir1  $sBox]
     set iType [dict get $quotes $sBrs]
@@ -999,7 +1023,6 @@ proc osPPC {sName sDir sIp sBuffer sBox sOpt sVersion sType rId sDep} {
     regexp "branches/(\[-.0-9a-zA-Z]+)" $sDir sTmp sBrs
     global quotes
     global sdk_dir
-#    global kernel_dir
     global ppc_dir
     global box_dir
     global box_name
@@ -1016,7 +1039,6 @@ proc osPPC {sName sDir sIp sBuffer sBox sOpt sVersion sType rId sDep} {
     set hTmp [dict get $rel_dir  $sBrs ] 
     set eBox [dict get $box_dir  $sBox ] 
     set sPow [dict get $ppc_dir  $sBrs]
-#    set sLin [dict get $kernel_dir  $sBox]
     set hType [dict get $cross_dir  $sBox]
     set cType [dict get $cross_dir1  $sBox]
     set iType [dict get $quotes $sBrs]
@@ -1115,7 +1137,7 @@ proc osPPC {sName sDir sIp sBuffer sBox sOpt sVersion sType rId sDep} {
        } 
        set sRevison " REVISION_NUM=$sVersion RELEASE_VER=$rId LINUX_DEB_VERSION=$rId-$sDep TOOLS_DEB_VERSION=$rId-$sDep XORP_LINUX_DEB_DEPEND_VERSION=$rId-$sDep OVS_LINUX_DEB_DEPEND_VERSION=$rId-$sDep XORP_TOOLS_DEB_DEPEND_VERSION=$rId-$sDep OVS_TOOLS_DEB_DEPEND_VERSION=$rId-$sDep"
 
-      if {[lsearch "as5712_54x niagara2632xl niagara2948_6xl as4610 dcs7032q28 as6712_32x" $sBox] != -1} {
+      if {[lsearch "as5712_54x niagara2632xl niagara2948_6xl as4610 dcs7032q28 as6712_32x 3924 5101 es4654bf as6701_32x" $sBox] != -1} {
        while 1 {
               expect {
                     $sName@  {
@@ -1297,7 +1319,6 @@ proc  ovsMake  {sName sDir sIp sBox oBuffer rId sLic  sVer sBrands}  {
      set sVasic ""
      global quotes
      global sdk_dir
-#     global kernel_dir
      global ppc_dir
      global box_dir
      global box_name
@@ -1320,7 +1341,6 @@ proc  ovsMake  {sName sDir sIp sBox oBuffer rId sLic  sVer sBrands}  {
      set hTmp [dict get $rel_dir  $sBrs ] 
      set eBox [dict get $box_dir  $sBox ] 
      set sPow [dict get $ppc_dir  $sBrs]
-#     set sLin [dict get $kernel_dir  $sBox]
      set hType [dict get $cross_dir  $sBox]
      set cType [dict get $cross_dir1  $sBox]
      set iType [dict get $quotes $sBrs]
@@ -1568,7 +1588,6 @@ proc osSDK {sName sDir sIp sBuffer sBox sOpt sVersion sType rId sDep} {
     regexp "branches/(\[-.0-9a-zA-Z]+)" $sDir sTmp sBrs
     global quotes
     global sdk_dir
-#    global kernel_dir
     global ppc_dir
     global box_dir
     global box_name
@@ -1581,7 +1600,6 @@ proc osSDK {sName sDir sIp sBuffer sBox sOpt sVersion sType rId sDep} {
     set hTmp [dict get $rel_dir  $sBrs ]
     set eBox [dict get $box_dir  $sBox ]
     set sPow [dict get $ppc_dir  $sBrs]
-#    set sLin [dict get $kernel_dir  $sBox]
     set hType [dict get $cross_dir  $sBox]
     set cType [dict get $cross_dir1  $sBox]
     set iType [dict get $quotes $sBrs]
@@ -1677,7 +1695,7 @@ proc osSDK {sName sDir sIp sBuffer sBox sOpt sVersion sType rId sDep} {
 
     set sRevison " REVISION_NUM=$sVersion RELEASE_VER=$rId LINUX_DEB_VERSION=$rId-$sDep TOOLS_DEB_VERSION=$rId-$sDep XORP_LINUX_DEB_DEPEND_VERSION=$rId-$sDep OVS_LINUX_DEB_DEPEND_VERSION=$rId-$sDep XORP_TOOLS_DEB_DEPEND_VERSION=$rId-$sDep OVS_TOOLS_DEB_DEPEND_VERSION=$rId-$sDep"
 
-    if {[lsearch "as5712_54x niagara2632xl niagara2948_6xl as4610 dcs7032q28 as6712_32x as7512_32x  s4048 as7712_32x" $sBox] != -1} {
+    if {[lsearch "as5712_54x niagara2632xl niagara2948_6xl as4610 dcs7032q28 as6712_32x as7512_32x  s4048 as7712_32x 3924 5101 es4654bf as6701_32x" $sBox] != -1} {
        while 1 {                                                                                                 
           expect {                                                                                              
               $sName@  {                                                                                           
@@ -1938,10 +1956,13 @@ proc pica8ImageUp {sName sDir sIp sBox sType sOpt sLic sRel sVer sBrand sCom sPl
        puts "##########  OMS Make  ##########"
        omsMake $sName $sDir $sIp $sBox 
    
-       # lb9a Making
+       # osPPC Making
        puts "########## osPPC  Make  ##########"
        osPPC $sName $sDir $sIp lBuffers $sBox $sOpt $sVersion $sType $rId $sDep
 
+       # clean the make environment
+       clearRm $sName $sDir $sIp $sBox 
+              
   } else {
        # Make image for pica8
        puts "##########  Pica  Make  ##########"
@@ -2048,7 +2069,10 @@ proc pica8ImageUp {sName sDir sIp sBox sType sOpt sLic sRel sVer sBrand sCom sPl
    
        # osPPC  Making
        puts "##########  osPPC  Make  ##########"
-       osPPC $sName $sDir $sIp lBuffers $sBox $sOpt $sVersion $sType $rId $sDep
+       osPPC $sName $sDir $sIp lBuffers $sBox $sOpt $sVersion $sType $rId $sDep   
+
+       # clean the make environment
+       clearRm $sName $sDir $sIp $sBox 
      }
 }
 
