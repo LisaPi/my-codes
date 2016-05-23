@@ -479,23 +479,6 @@ proc imageRm {sName sDir sIp sType sBox} {
             }
         }
         
-      while 0 {
-            expect {
-            "$sName@" {
-                exp_send "git pull\r"
-                exp_continue
-            }
-            "Username" {
-                exp_send "build\r"
-                expect -re "Password"
-                exp_send "pica8build\r"  
-                expect -re "$sName@"
-                send "\r"
-                break
-            }             
-          } 
-        }
-
         while 1 {
             expect {
                 "$sName@" {
@@ -1560,7 +1543,7 @@ proc omsMake {sName sDir sIp sBox } {
     while 1 {
         expect {
             "$sName@" {
-                send "python build.py $eBox $oDir $vOvs\r"
+                send "sudo python build.py $eBox $oDir $vOvs\r"
                 break
              }
           }
@@ -1961,7 +1944,7 @@ proc pica8ImageUp {sName sDir sIp sBox sType sOpt sLic sRel sVer sBrand sCom sPl
        osPPC $sName $sDir $sIp lBuffers $sBox $sOpt $sVersion $sType $rId $sDep
 
        # clean the make environment
-       clearRm $sName $sDir $sIp $sBox 
+       #clearRm $sName $sDir $sIp $sBox 
               
   } else {
        # Make image for pica8
@@ -2072,7 +2055,7 @@ proc pica8ImageUp {sName sDir sIp sBox sType sOpt sLic sRel sVer sBrand sCom sPl
        osPPC $sName $sDir $sIp lBuffers $sBox $sOpt $sVersion $sType $rId $sDep   
 
        # clean the make environment
-       clearRm $sName $sDir $sIp $sBox 
+       #clearRm $sName $sDir $sIp $sBox 
      }
 }
 

@@ -46,7 +46,7 @@ proc git_clone  {sIp sName sModel sBrs} {
      while 1 {
         expect {
             "$sName@" {
-                send "cd $sBrs\r"
+                send "cd /home/$sName/$sModel/release/pica8/branches/$sBrs\r"
                 break
             }
         }
